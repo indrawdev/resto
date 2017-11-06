@@ -14,4 +14,7 @@ class History extends CI_Controller {
 		$this->load->view('vhistory');
 	}
 
+	public function grid() {
+
+	}
 }

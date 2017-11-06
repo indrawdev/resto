@@ -19,127 +19,6 @@ Ext.onReady(function() {
 	var vLevel = '';
 	var required = '<span style="color:red;font-weight:bold" data-qtip="Required">*</span>';
 
-	// COMPONENT FORM SETUP USER
-	var grupKaryawan = Ext.create('Ext.data.Store', {
-		autoLoad: false,
-		fields: [
-			'fn_nik','fs_nama_karyawan'
-		],
-		pageSize: 25,
-		proxy: {
-			actionMethods: {
-				read: 'POST'
-			},
-			reader: {
-				rootProperty: 'hasil',
-				totalProperty: 'total',
-				type: 'json'
-			},
-			type: 'ajax',
-			url: 'masteruser/gridkaryawan'
-		},
-		listeners: {
-			beforeload: function(store) {
-				Ext.apply(store.getProxy().extraParams, {
-					'fs_cari': Ext.getCmp('txtCariKaryawan').getValue()
-				});
-			}
-		}
-	});
-
-	var winGrid1 = Ext.create('Ext.grid.Panel',{
-		anchor: '100%',
-		autoDestroy: true,
-		height: 450,
-		width: 550,
-		sortableColumns: false,
-		store: grupKaryawan,
-		columns: [
-			{xtype: 'rownumberer', width: 45},
-			{text: "NIK", dataIndex: 'fn_nik', menuDisabled: true, flex: 1},
-			{text: "Nama Karyawan", dataIndex: 'fs_nama_karyawan', menuDisabled: true, flex: 2},
-		],
-		tbar: [{
-			flex: 1,
-			layout: 'anchor',
-			xtype: 'container',
-			items: [{
-				anchor: '98%',
-				emptyText: 'Nama Karyawan',
-				id: 'txtCariKaryawan',
-				name: 'txtCariKaryawan',
-				xtype: 'textfield'
-			}]
-		},{
-			flex: 0.2,
-			layout: 'anchor',
-			xtype: 'container',
-			items: [{
-				anchor: '100%',
-				text: 'Search',
-				xtype: 'button',
-				handler: function() {
-					grupKaryawan.load();
-				}
-			}]
-		},{
-			flex: 0.5,
-			layout: 'anchor',
-			xtype: 'container',
-			items: []
-		}],
-		bbar: Ext.create('Ext.PagingToolbar', {
-			displayInfo: true,
-			pageSize: 25,
-			plugins: Ext.create('Ext.ux.ProgressBarPager', {}),
-			store: grupKaryawan,
-			items:[
-				'-', {
-				text: 'Exit',
-				handler: function() {
-					winCari1.hide();
-				}
-			}]
-		}),
-		listeners: {
-			itemdblclick: function(grid, record) {
-				Ext.getCmp('cboNIK').setValue(record.get('fn_nik'));
-				Ext.getCmp('txtNama').setValue(record.get('fs_nama_karyawan'));
-				grupKaryawan.load();
-				winCari1.hide();
-			}
-		},
-		viewConfig: {
-			getRowClass: function() {
-				return 'rowwrap';
-			},
-			markDirty: false
-		}
-	});
-
-	var winCari1 = Ext.create('Ext.window.Window', {
-		border: false,
-		closable: false,
-		draggable: true,
-		frame: false,
-		layout: 'fit',
-		plain: true,
-		resizable: false,
-		title: 'Searching...',
-		items: [
-			winGrid1
-		],
-		listeners: {
-			beforehide: function() {
-				vMask.hide();
-			},
-			beforeshow: function() {
-				grupKaryawan.load();
-				vMask.show();
-			}
-		}
-	});
-
 	var grupLevel = Ext.create('Ext.data.Store', {
 		autoLoad: false,
 		fields: [
@@ -593,28 +472,6 @@ Ext.onReady(function() {
 		maxLength: 4,
 		maskRe: /[0123456789]/,
 		enforceMaxLength: true
-	};
-
-	var btnSave1 = {
-		anchor: '90%',
-		scale: 'medium',
-		xtype: 'button',
-		id: 'btnSave1',
-		name: 'btnSave1',
-		text: 'Save',
-		iconCls: 'icon-save',
-		handler: fnCekSaveUser
-	};
-
-	var btnReset1 = {
-		anchor: '90%',
-		scale: 'medium',
-		xtype: 'button',
-		id: 'btnReset1',
-		name: 'btnReset1',
-		text: 'Reset',
-		iconCls: 'icon-reset',
-		handler: fnResetUser
 	};
 
 	// COMPONENT FORM SETUP LEVEL
@@ -1400,28 +1257,7 @@ Ext.onReady(function() {
 			}
 		}
 	});
-
-	var btnSave2 = {
-		anchor: '90%',
-		scale: 'medium',
-		xtype: 'button',
-		id: 'btnSave2',
-		name: 'btnSave2',
-		text: 'Save',
-		iconCls: 'icon-save',
-		handler: fnCekSaveLevel
-	};
-
-	var btnReset2 = {
-		anchor: '90%',
-		scale: 'medium',
-		xtype: 'button',
-		id: 'btnReset2',
-		name: 'btnReset2',
-		text: 'Reset',
-		iconCls: 'icon-reset',
-		handler: fnResetLevel
-	};
+	
 
 	// COMPONENT FORM SETUP LEVEL
 	var gridLevel = Ext.create('Ext.grid.Panel', {
@@ -1630,12 +1466,14 @@ Ext.onReady(function() {
 			text: 'Waktu Log',
 			dataIndex: 'fd_time',
 			menuDisabled: true,
-			width: 130
+			width: 130,
+			locked: true
 		},{
 			text: 'Nama Log',
 			dataIndex: 'fs_log',
 			menuDisabled: true,
-			width: 120
+			width: 120,
+			locked: true
 		},{
 			align: 'center',
 			text: 'Nama User',
@@ -1717,14 +1555,6 @@ Ext.onReady(function() {
 	function fnCekSaveUser() {
 		if (this.up('form').getForm().isValid()) {
 
-			// CABANG AKSES
-			var xkdcabang = '';
-
-			var store = gridAksesCabang.getStore();
-			store.each(function(record, idx) {
-				xkdcabang = xkdcabang +'|'+ record.get('fs_kode_cabang');
-			});
-
 			Ext.Ajax.on('beforerequest', fnMaskShow);
 			Ext.Ajax.on('requestcomplete', fnMaskHide);
 			Ext.Ajax.on('requestexception', fnMaskHide);
@@ -1735,8 +1565,7 @@ Ext.onReady(function() {
 				params: {
 					'fs_username': Ext.getCmp('txtUser').getValue(),
 					'fs_password': Ext.getCmp('txtPass').getValue(),
-					'fs_confpass': Ext.getCmp('txtConfPass').getValue(),
-					'fs_kode_cabang': xkdcabang
+					'fs_confpass': Ext.getCmp('txtConfPass').getValue()
 				},
 				success: function(response) {
 					var xtext = Ext.decode(response.responseText);
@@ -1779,15 +1608,6 @@ Ext.onReady(function() {
 	}	
 
 	function fnSaveUser() {
-
-		// LOKASI CABANG
-		var xkdcabang = '';
-
-		var store = gridAksesCabang.getStore();
-		store.each(function(record, idx) {
-			xkdcabang = xkdcabang +'|'+ record.get('fs_kode_cabang');
-		});
-
 		Ext.Ajax.on('beforerequest', fnMaskShow);
 		Ext.Ajax.on('requestcomplete', fnMaskHide);
 		Ext.Ajax.on('requestexception', fnMaskHide);
@@ -1798,8 +1618,7 @@ Ext.onReady(function() {
 			params: {
 				'fs_username': Ext.getCmp('txtUser').getValue(),
 				'fs_password': Ext.getCmp('txtPass').getValue(),
-				'fs_level_user': Ext.getCmp('cboLevel1').getValue(),
-				'fs_kode_cabang': xkdcabang
+				'fs_level_user': Ext.getCmp('cboLevel1').getValue()
 			},
 			success: function(response) {
 				var xtext = Ext.decode(response.responseText);
@@ -1813,7 +1632,6 @@ Ext.onReady(function() {
 				fnResetUser();
 
 				// REFRESH AFTER SAVE
-				grupAksesCabang.load();
 				grupUser.load();
 				grupActivity.load();
 			},
@@ -1938,7 +1756,7 @@ Ext.onReady(function() {
 		frame: true,
 		region: 'center',
 		title: 'Master User',
-		width: 930,
+		width: 630,
 		items: [{
 			activeTab: 0,
 			bodyStyle: 'padding: 5px; background-color: '.concat(gBasePanel),
@@ -1959,20 +1777,21 @@ Ext.onReady(function() {
 						labelWidth: 120,
 						msgTarget: 'side'
 					},
+					anchor: '100%',
 					xtype: 'fieldset',
-					border: false,
+					title: 'Form Setup User',
+					style: 'padding: 5px;',
 					items: [{
-						anchor: '100%',
+						anchor: '90%',
 						layout: 'hbox',
 						xtype: 'container',
 						items: [{
-							flex: 1,
+							flex: 2,
 							layout: 'anchor',
 							xtype: 'container',
 							items: [{
 								anchor: '98%',
-								style: 'padding: 5px;',
-								title: 'Form Setup User',
+								border: false,
 								xtype: 'fieldset',
 								items: [
 									txtUser,
@@ -1980,45 +1799,22 @@ Ext.onReady(function() {
 									txtConfPass,
 									cboLevel1
 								]
-							},{
-								anchor: '100%',
-								layout: 'hbox',
-								xtype: 'container',
-								items: [{
-									flex: 2.2,
-									layout: 'anchor',
-									xtype: 'container',
-									items: []
-								},{
-									flex: 2,
-									layout: 'anchor',
-									xtype: 'container',
-									items: [
-										btnSave1
-									]
-								},{
-									flex: 2,
-									layout: 'anchor',
-									xtype: 'container',
-									items: [
-										btnReset1
-									]
-								}]
-							}]
-						},{
-							flex: 1.5,
-							layout: 'anchor',
-							xtype: 'container',
-							items: [{
-								style: 'padding: 5px;',
-								title: 'Form Akses Cabang',
-								xtype: 'fieldset',
-								items: [
-									gridAksesCabang
-								]
 							}]
 						}]
 					}]
+				}],
+				buttons: [{
+					iconCls: 'icon-save',
+					id: 'btnSaveUser',
+					name: 'btnSaveUser',
+					text: 'Save',
+					scale: 'medium',
+					handler: fnCekSaveUser
+				},{
+					iconCls: 'icon-reset',
+					text: 'Reset',
+					scale: 'medium',
+					handler: fnResetUser
 				}]
 			},{
 				id: 'tab2',
@@ -2034,49 +1830,26 @@ Ext.onReady(function() {
 						labelWidth: 120,
 						msgTarget: 'side'
 					},
-					anchor: '75%',
+					anchor: '100%',
 					style: 'padding: 5px;',
 					title: 'Setup User',
 					xtype: 'fieldset',
 					items: [
 						gridlevelMenu
 					]
+				}],
+				buttons: [{
+					iconCls: 'icon-save',
+					id: 'btnSaveLevel',
+					name: 'btnSaveLevel',
+					text: 'Save',
+					scale: 'medium',
+					handler: fnCekSaveLevel
 				},{
-					fieldDefaults: {
-						labelAlign: 'right',
-						labelSeparator: '',
-						labelWidth: 120,
-						msgTarget: 'side'
-					},
-					anchor: '75%',
-					style: 'padding: 1px;',
-					border: false,
-					xtype: 'fieldset',
-					items: [{
-						anchor: '100%',
-						layout: 'hbox',
-						xtype: 'container',
-						items: [{
-							flex: 4,
-							layout: 'anchor',
-							xtype: 'container',
-							items: []
-						},{
-							flex: 2,
-							layout: 'anchor',
-							xtype: 'container',
-							items: [
-								btnSave2
-							]
-						},{
-							flex: 2,
-							layout: 'anchor',
-							xtype: 'container',
-							items: [
-								btnReset2
-							]
-						}]
-					}]
+					iconCls: 'icon-reset',
+					text: 'Reset',
+					scale: 'medium',
+					handler: fnResetLevel
 				}]
 			},{
 				id: 'tab3',
@@ -2092,7 +1865,7 @@ Ext.onReady(function() {
 						labelWidth: 120,
 						msgTarget: 'side'
 					},
-					anchor: '75%',
+					anchor: '100%',
 					style: 'padding: 5px;',
 					title: 'Daftar User',
 					xtype: 'fieldset',
@@ -2114,7 +1887,7 @@ Ext.onReady(function() {
 						labelWidth: 120,
 						msgTarget: 'side'
 					},
-					anchor: '75%',
+					anchor: '100%',
 					style: 'padding: 5px;',
 					title: 'User Activity',
 					xtype: 'fieldset',

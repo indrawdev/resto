@@ -6,7 +6,6 @@
 	<link rel="icon" type="image/ico" href="<?php echo config_item('base_img');?>favicon.ico">
 	<link rel="stylesheet" type="text/css" href="<?php echo config_item('base_tema');?>">
 	<link rel="stylesheet" type="text/css" href="<?php echo config_item('base_css');?>form.css">
-	<link rel="stylesheet" type="text/css" href="<?php echo config_item('base_css');?>mainmenu.css">
 	<div class="center" id="loading">
 		<img src="<?php echo config_item('base_img');?>loading.gif" alt="Loading"/>
 	</div>

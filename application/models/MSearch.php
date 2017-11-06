@@ -9,18 +9,33 @@ class MSearch extends CI_Model {
 		$this->load->database();
 	}
 
-	public function listCabangAll($sCari)
+	public function getReferensi($sKode)
 	{
 		$xSQL = ("
-			SELECT fs_kode_cabang, fs_nama_cabang
-			FROM tm_cabang
-			WHERE fs_aktif = '1'
+			SELECT fs_nilai1_referensi, fs_nilai2_referensi, fs_nama_referensi
+			FROM tm_referensi
+			WHERE fs_kode_referensi = '".trim($sKode)."'
 		");
 
-		if (!empty($sCari))
-		{
+		$xSQL = $xSQL.("
+			ORDER BY fs_nilai1_referensi ASC
+		");
+
+		$sSQL = $this->db->query($xSQL);
+		return $sSQL;
+	}
+
+	public function listUserAll($sCari)
+	{
+		$xSQL = ("
+			SELECT fs_username, fs_password, 
+				fs_level_user, fd_tanggal_buat
+			FROM tm_user
+		");
+
+		if (!empty($sCari)) {
 			$xSQL = $xSQL.("
-				AND fs_nama_cabang LIKE '%".trim($sCari)."%'
+				WHERE fs_username LIKE '%".trim($sCari)."%'
 			");
 		}
 
@@ -28,65 +43,22 @@ class MSearch extends CI_Model {
 		return $sSQL;
 	}
 
-	public function listCabang($sCari, $nStart, $nLimit)
+	public function listUser($sCari, $nStart, $nLimit)
 	{
 		$xSQL = ("
-			SELECT fs_kode_cabang, fs_nama_cabang
-			FROM tm_cabang
-			WHERE fs_aktif = '1'
+			SELECT fs_username, fs_password, 
+				fs_level_user, fd_tanggal_buat
+			FROM tm_user
 		");
 
-		if (!empty($sCari))
-		{
+		if (!empty($sCari)) {
 			$xSQL = $xSQL.("
-				AND fs_nama_cabang LIKE '%".trim($sCari)."%'
+				WHERE fs_username LIKE '%".trim($sCari)."%'
 			");
 		}
 
 		$xSQL = $xSQL.("
-			ORDER BY fs_kode_cabang ASC LIMIT ".$nStart.",".$nLimit."
-		");
-
-		$sSQL = $this->db->query($xSQL);
-		return $sSQL;
-	}
-
-	public function listSurveyorAll($sCari)
-	{
-		$xSQL = ("
-			SELECT fs_kode_surveyor, fs_nama_surveyor
-			FROM tm_surveyor
-			WHERE fs_aktif = '1'
-		");
-
-		if (!empty($sCari))
-		{
-			$xSQL = $xSQL.("
-				AND fs_kode_surveyor LIKE '%".trim($sCari)."%'
-			");
-		}
-
-		$sSQL = $this->db->query($xSQL);
-		return $sSQL;
-	}
-
-	public function listSurveyor($sCari, $nStart, $nLimit)
-	{
-		$xSQL = ("
-			SELECT fs_kode_surveyor, fs_nama_surveyor
-			FROM tm_surveyor
-			WHERE fs_aktif = '1'
-		");
-
-		if (!empty($sCari))
-		{
-			$xSQL = $xSQL.("
-				AND fs_nama_surveyor LIKE '%".trim($sCari)."%'
-			");
-		}
-		
-		$xSQL = $xSQL.("
-			ORDER BY fs_kode_surveyor ASC LIMIT ".$nStart.",".$nLimit."
+			ORDER BY fd_tanggal_buat DESC LIMIT ".$nStart.",".$nLimit."
 		");
 
 		$sSQL = $this->db->query($xSQL);
