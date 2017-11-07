@@ -162,4 +162,115 @@ class Order extends CI_Controller {
 		}
 	}
 
+	public function cetakpos() {
+		$this->load->helper('escpos');
+		$printer = new phpprint("LPT1");
+		$printer->set_justification(phpprint::JUSTIFY_CENTER);
+		/* HEADER */
+		$printer->text("REMPAH WANGI\n");
+		$printer->text("Jl. Fatmawati no. 29 Jak-Sel\n");
+		$printer->text("Telp. 021 - 7509168\n");
+		$printer->text("Fax. 021 - 7509167\n");
+		$printer->text("www.rempahwangi.com\n");
+		
+		
+		// LABEL
+		$label_tanggal = str_pad('Tanggal', 15, " ", STR_PAD_RIGHT);
+		$label_jam = str_pad('Jam', 15, " ", STR_PAD_RIGHT);
+		$label_tamu = str_pad('Nama Tamu', 15, " ", STR_PAD_RIGHT);
+		$label_pelayan = str_pad('Pelayan', 15, " ", STR_PAD_RIGHT);
+		$label_meja = str_pad('No. Meja', 15," ", STR_PAD_RIGHT);
+		$label_jumlah = str_pad('Jumlah Tamu', 15, " ", STR_PAD_RIGHT);
+		
+		$label_subtotal = str_pad('Sub Total', 22, " ", STR_PAD_LEFT);
+		$label_service = str_pad('Serv. Charge 5.5%', 22, " ", STR_PAD_LEFT);
+		$label_ppn = str_pad('PB-1 10%', 22, " ", STR_PAD_LEFT);
+		$label_totalbill = str_pad('Total Bill', 22, " ", STR_PAD_LEFT);
+
+		// SEPARATOR
+		$separator = str_pad(':', 3, " ", STR_PAD_BOTH);
+
+		// VALUE
+		$val_tanggal = str_pad('02-11-17', 22, " ", STR_PAD_RIGHT);
+		$val_jam = str_pad('02:46:10', 22, " ", STR_PAD_RIGHT);
+		$val_tamu = str_pad('Umum', 22, " ", STR_PAD_RIGHT);
+		$val_pelayan = str_pad('Christine', 22, " ", STR_PAD_RIGHT);
+		$val_meja = str_pad('D14', 22, " ", STR_PAD_RIGHT);
+		$val_jumlah = str_pad('2', 22, " ", STR_PAD_RIGHT);
+
+		$val_subtotal = str_pad('171,000', 15, " ", STR_PAD_LEFT);
+		$val_service = str_pad('9,405', 15, " ", STR_PAD_LEFT);
+		$val_ppn = str_pad('18,041', 15, " ", STR_PAD_LEFT);
+		$val_totalbill = str_pad('198,446', 15, " ", STR_PAD_LEFT);
+
+		/* BODY */
+		$printer->set_justification(phpprint::JUSTIFY_LEFT);
+		$printer->text("=======================================\n");
+
+		// PRINT 1
+		$printer->text($label_tanggal . $separator . $val_tanggal);
+		$printer->newline();
+		$printer->text($label_jam . $separator . $val_jam);
+		$printer->newline();
+		$printer->text($label_tamu . $separator . $val_tamu);
+		$printer->newline();
+		$printer->text($label_pelayan . $separator . $val_pelayan);
+		$printer->newline();
+		$printer->text($label_meja . $separator . $val_meja);
+		$printer->newline();
+		$printer->text($label_jumlah . $separator . $val_jumlah);
+		$printer->newline();
+
+		$printer->text("=======================================\n");
+		$printer->newline();
+		$printer->set_justification(phpprint::JUSTIFY_RIGHT);
+		$printer->text("---------------------------------------\n");
+		$printer->text($val_subtotal . $separator . $val_subtotal);
+		$printer->newline();
+		$printer->text($label_service . $separator . $val_service);
+		$printer->newline();
+		$printer->text($label_ppn . $separator . $val_ppn);
+		$printer->newline();
+		$printer->text("---------------------------------------\n");
+		$printer->text($label_totalbill . $separator . $val_totalbill);
+		$printer->newline();
+		/*
+		$printer->set_justification(phpprint::JUSTIFY_LEFT);
+		$printer->text("  1 Daging Mercon Batang");
+		$printer->set_justification(phpprint::JUSTIFY_RIGHT);
+		$printer->text("62,000");
+		$printer->newline();
+		$printer->set_justification(phpprint::JUSTIFY_LEFT);
+		$printer->text("  2 Nasi Putih");
+		$printer->set_justification(phpprint::JUSTIFY_RIGHT);
+		$printer->text("16,000");
+		$printer->newline();
+		$printer->set_justification(phpprint::JUSTIFY_LEFT);
+		$printer->text("  2 Nasi Putih");
+		$printer->set_justification(phpprint::JUSTIFY_RIGHT);
+		$printer->text("16,000");
+		$printer->newline();
+		$printer->set_justification(phpprint::JUSTIFY_LEFT);
+		$printer->text("  1 Sop Iga Kadeudeuh");
+		$printer->set_justification(phpprint::JUSTIFY_RIGHT);
+		$printer->text("65,000");
+		$printer->newline();
+		$printer->set_justification(phpprint::JUSTIFY_LEFT);
+		$printer->text("  1 Ice Lemon Tea");
+		$printer->set_justification(phpprint::JUSTIFY_RIGHT);
+		$printer->text("28,000");
+		$printer->newline();
+		$printer->text("-----------------------------------------\n");
+		$printer->text("Sub Total : 171,000\n");
+		$printer->text("Serv. Charge 5.5% : 9,405\n");
+		$printer->text("PB-1 10% : 18,041\n");
+		$printer->text("-----------------------------------------\n");
+		$printer->text("Total Bill : 198,446\n");
+		*/
+		/* FOOTER */
+		$printer->cut();
+		echo "Print succesful";
+	}
+
+
 }

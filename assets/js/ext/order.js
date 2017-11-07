@@ -538,8 +538,12 @@ Ext.onReady(function() {
 				disabled: true
 			}]
 		}],
-		bbar: [{
-		}],
+		bbar: Ext.create('Ext.PagingToolbar', {
+			displayInfo: true,
+			pageSize: 25,
+			plugins: Ext.create('Ext.ux.ProgressBarPager', {}),
+			store: ''
+		}),
 		listeners: {
 			selectionchange: function(view, records) {
 				gridOrder.down('#removeData').setDisabled(!records.length);
@@ -551,13 +555,65 @@ Ext.onReady(function() {
 			},
 			markDirty: false,
 			stripeRows: true
-		},
+		}
+	});
+
+	// GRID HISTORY
+	var gridHistory = Ext.create('Ext.grid.Panel', {
+		anchor: '100%',
+		defaultType: 'textfield',
+		height: 450,
+		sortableColumns: false,
+		store: '',
+		columns: [{
+			xtype: 'rownumberer',
+			width: 25
+		},{
+			text: 'No. Order',
+			dataIndex: 'fs_kode_referensi',
+			menuDisabled: true,
+			width: 130
+		},{
+			text: 'Tanggal',
+			dataIndex: 'fd_tanggal_order',
+			menuDisabled: true,
+			width: 50
+		},{
+			text: 'Nama Tamu',
+			dataIndex: 'fs_nama_tamu',
+			menuDisabled: true,
+			width: 50
+		},{
+			text: 'No. Meja',
+			dataIndex: 'fs_no_meja',
+			menuDisabled: true,
+			width: 200
+		}],
+		bbar: Ext.create('Ext.PagingToolbar', {
+			displayInfo: true,
+			pageSize: 25,
+			plugins: Ext.create('Ext.ux.ProgressBarPager', {}),
+			store: ''
+		}),
+		viewConfig: {
+			getRowClass: function() {
+				return 'rowwrap';
+			},
+			markDirty: false,
+			stripeRows: true
+		}
 	});
 
 
 	// FUNCTIONS
 	function fnReset() {
-
+		Ext.getCmp('txtNamaTamu').setValue('');
+		Ext.getCmp('cboMeja').setValue('');
+		Ext.getCmp('txtJumlahTamu').setValue('');
+		Ext.getCmp('txtSubTotal').setValue(0);
+		Ext.getCmp('txtServCharge').setValue(0);
+		Ext.getCmp('txtPPN').setValue(0);
+		Ext.getCmp('txtTotalBill').setValue(0);
 	}
 
 	function fnCekSave() {
@@ -613,9 +669,54 @@ Ext.onReady(function() {
 	}
 
 	function fnSave() {
+		xkodemenu = '';
+		xhargamenu = '';
+
 		Ext.Ajax.on('beforerequest', fnMaskShow);
 		Ext.Ajax.on('requestcomplete', fnMaskHide);
 		Ext.Ajax.on('requestexception', fnMaskHide);
+
+		Ext.Ajax.request({
+			method: 'POST',
+			url: 'order/save',
+			params: {
+				'fs_no_order': Ext.getCmp('txtNoOrder').getValue(),
+				'fs_nama_tamu': Ext.getCmp('txtNamaTamu').getValue(),
+				'fs_no_meja': Ext.getCmp('cboMeja').getValue(),
+				'fn_jumlah_tamu': Ext.getCmp('txtJumlahTamu').getValue(),
+				'fn_subtotal': Ext.getCmp('txtSubTotal').getValue(),
+				'fn_serv_charge': Ext.getCmp('txtServCharge').getValue(),
+				'fn_ppn': Ext.getCmp('txtPPN').getValue(),
+				'fn_total_bill': Ext.getCmp('txtTotalBill').getValue(),
+				'fs_kode_menu': '',
+				'fn_harga': '',
+			},
+			success: function(response) {
+				var xtext = Ext.decode(response.responseText);
+				Ext.MessageBox.show({
+					buttons: Ext.MessageBox.OK,
+					closable: false,
+					icon: Ext.MessageBox.INFO,
+					msg: xtext.hasil,
+					title: 'RESTO'
+				});
+				fnReset();
+
+				// LOAD DATA
+				grupOrderHeader.load();
+			},
+			failure: function(response) {
+				var xtext = Ext.decode(response.responseText);
+				Ext.MessageBox.show({
+					buttons: Ext.MessageBox.OK,
+					closable: false,
+					icon: Ext.MessageBox.INFO,
+					msg: 'Saving Failed, Connection Failed!!',
+					title: 'RESTO'
+				});
+				fnMaskHide();
+			}
+		});
 	}
 
 	var frmOrder = Ext.create('Ext.form.Panel', {
@@ -712,7 +813,7 @@ Ext.onReady(function() {
 					title: 'Order History',
 					style: 'padding: 5px;',
 					items: [
-
+						gridHistory
 					]
 				}]
 			}]
