@@ -14,6 +14,13 @@ class Masterpembayaran extends CI_Controller {
 		$this->load->view('vmasterpembayaran');
 	}
 
+	public function combo() {
+		// NON AKTIF
+		$array = array(1 => array('1','YA'), 2 => array('0','TIDAK'));
+		$out = array_values($array);
+		echo json_encode($out);
+	}
+
 	public function grid() {
 		$sCari = trim($this->input->post('fs_cari'));
 		$nStart = trim($this->input->post('start'));
@@ -30,10 +37,10 @@ class Masterpembayaran extends CI_Controller {
 		if ($sSQL->num_rows() > 0) {
 			foreach ($sSQL->result() as $xRow) {
 				$xArr[] = array(
-						'fs_kode_pembayaran' => trim($xRow->fs_kode_pembayaran),
-						'fs_nama_pembayaran' => trim($xRow->fs_nama_pembayaran),
-						'fs_aktif' => trim($xRow->fs_aktif)
-					);
+					'fs_kode_pembayaran' => trim($xRow->fs_kode_pembayaran),
+					'fs_nama_pembayaran' => trim($xRow->fs_nama_pembayaran),
+					'fs_aktif' => trim($xRow->fs_aktif)
+				);
 			}
 		}
 		echo '({"total":"'.$xTotal.'","hasil":'.json_encode($xArr).'})';

@@ -18,7 +18,28 @@ Ext.onReady(function() {
 
 	var required = '<span style="color:red;font-weight:bold" data-qtip="Required">*</span>';
 
-	Ext.define('DataGridOrderHeader', {
+	Ext.Ajax.request({
+		method: 'POST',
+		url: 'order/getorder',
+		success: function(response) {
+			var xtext = Ext.decode(response.responseText);
+			if (xtext.sukses === true) {
+				Ext.getCmp('txtNoOrder').setValue(xtext.fn_counter);
+			}
+		},
+		failure: function(response) {
+			var xText = Ext.decode(response.responseText);
+			Ext.MessageBox.show({
+				buttons: Ext.MessageBox.OK,
+				closable: false,
+				icon: Ext.MessageBox.INFO,
+				message: 'Load default value Failed, Connection Failed!!',
+				title: 'RESTO'
+			});
+		}
+	});
+
+	Ext.define('DataGridHeader', {
 		extend: 'Ext.data.Model',
 		fields: [
 			{name: 'fs_no_order', type: 'string'},
@@ -33,11 +54,13 @@ Ext.onReady(function() {
 		]
 	});
 
-	Ext.define('DataGridOrderDetail', {
+	Ext.define('DataGridDetail', {
 		extend: 'Ext.data.Model',
 		fields: [
 			{name: 'fs_no_order', type: 'string'},
 			{name: 'fs_kode_menu', type: 'string'},
+			{name: 'fs_nama_menu', type: 'string'},
+			{name: 'fn_qty', type: 'int'},
 			{name: 'fn_harga', type: 'string'}
 		]
 	});
@@ -54,7 +77,7 @@ Ext.onReady(function() {
 
 	var grupOrderHeader = Ext.create('Ext.data.Store', {
 		autoLoad: true,
-		model: 'DataGridOrderHeader',
+		model: 'DataGridHeader',
 		pageSize: 25,
 		proxy: {
 			actionMethods: {
@@ -66,20 +89,20 @@ Ext.onReady(function() {
 				type: 'json'
 			},
 			type: 'ajax',
-			url: 'order/gridorderheader'
+			url: 'order/gridorderhistory'
 		},
 		listeners: {
 			beforeload: function(store) {
 				Ext.apply(store.getProxy().extraParams, {
-					//'fs_cari': Ext.getCmp('txtCari').getValue()
+					'fs_cari': Ext.getCmp('txtCari').getValue()
 				});
 			}
 		}
 	});
 
 	var grupOrderDetail = Ext.create('Ext.data.Store', {
-		autoLoad: true,
-		model: 'DataGridOrderDetail',
+		autoLoad: false,
+		model: 'DataGridDetail',
 		pageSize: 25,
 		proxy: {
 			actionMethods: {
@@ -150,6 +173,56 @@ Ext.onReady(function() {
 			}
 		}
 	});
+
+	var grupPembayaran = Ext.create('Ext.data.Store', {
+		autoLoad: true,
+		fields: [
+			'fs_kode','fs_nama'
+		],
+		proxy: {
+			actionMethods: {
+				read: 'POST'
+			},
+			reader: {
+				type: 'json'
+			},
+			type: 'ajax',
+			url: 'order/pembayaran'
+		}
+	});
+
+	// COUNTING FUNCTION
+	function fnTotalBill() {
+		var xsubtotal = 0;
+		var xservcharge = 0;
+		var xppntotal = 0;
+		var xtotalbill = 0;
+
+		var store = gridOrderDetail.getStore();
+		store.each(function(record, idx) {
+			xsubtotal = xsubtotal + (record.get('fn_qty') * record.get('fn_harga'));
+		});
+
+		xservcharge = xsubtotal * 0.055;
+		xppntotal = xsubtotal * 0.1;
+		xtotalbill = xsubtotal + xservcharge + xppntotal;
+
+		Ext.getCmp('txtSubTotal').setValue(xsubtotal);
+		Ext.getCmp('txtServCharge').setValue(xservcharge);
+		Ext.getCmp('txtPPN').setValue(xppntotal);
+		Ext.getCmp('txtTotalBill').setValue(xtotalbill);
+	}
+
+	function fnUangKembali() {
+		var xtotalbill = 0;
+		var xuangbayar = 0;
+		var xuangkembali = 0;
+
+		xtotalbill = Ext.getCmp('txtTotalBill').getValue();
+		xuangbayar = Ext.getCmp('txtUangBayar').getValue();
+		xuangkembali = xuangbayar - xtotalbill;
+		Ext.getCmp('txtUangKembali').setValue(xuangkembali);
+	}
 
 	// POPUP MENU
 	var winGrid = Ext.create('Ext.grid.Panel',{
@@ -261,13 +334,6 @@ Ext.onReady(function() {
 	});
 
 	// COMPONENT FORM ORDER
-	var txtNoOrder = {
-		id: 'txtNoOrder',
-		name: 'txtNoOrder',
-		xtype: 'textfield',
-		hidden: true
-	};
-
 	var txtNamaMenu = {
 		anchor: '95%',
 		fieldLabel: 'Nama Menu',
@@ -362,6 +428,65 @@ Ext.onReady(function() {
 		value: 0
 	};
 
+	var txtUangBayar = {
+		alwaysDisplayDecimals: true,
+		anchor: '98%',
+		currencySymbol: '',
+		decimalPrecision: 0,
+		decimalSeparator: '.',
+		editable: true,
+		fieldLabel: 'Uang Bayar',
+		fieldStyle: 'background-image: none; text-align: right;',
+		hideTrigger: true,
+		id: 'txtUangBayar',
+		name: 'txtUangBayar',
+		xtype: 'numericfield',
+		keyNavEnabled: true,
+		mouseWheelEnabled: false,
+		thousandSeparator: ',',
+		useThousandSeparator: true,
+		value: 0,
+		listeners: {
+			change: function(value) {
+				fnUangKembali();
+			}
+		}
+	};
+
+	var txtUangKembali = {
+		alwaysDisplayDecimals: true,
+		anchor: '98%',
+		currencySymbol: '',
+		decimalPrecision: 0,
+		decimalSeparator: '.',
+		editable: false,
+		fieldLabel: 'Uang Kembali',
+		fieldStyle: 'background-color: #eee; background-image: none; text-align: right;',
+		hideTrigger: true,
+		id: 'txtUangKembali',
+		name: 'txtUangKembali',
+		xtype: 'numericfield',
+		keyNavEnabled: false,
+		mouseWheelEnabled: false,
+		thousandSeparator: ',',
+		useThousandSeparator: true,
+		value: 0
+	};
+
+	var txtNoOrder = {
+		afterLabelTextTpl: required,
+		allowBlank: false,
+		anchor: '90%',
+		fieldLabel: 'No. Order',
+		fieldStyle: 'background-color: #eee; background-image: none;',
+		id: 'txtNoOrder',
+		name: 'txtNoOrder',
+		xtype: 'textfield',
+		minValue: 0,
+		maxLength: 30,
+		enforceMaxLength: true
+	};
+
 	var txtNamaTamu = {
 		afterLabelTextTpl: required,
 		allowBlank: false,
@@ -403,13 +528,41 @@ Ext.onReady(function() {
 		enforceMaxLength: true
 	};
 
-	// GRID ORDER
-	var gridOrder = Ext.create('Ext.grid.Panel', {
+	var cboPembayaran = {
+		afterLabelTextTpl: required,
+		allowBlank: false,
+		anchor: '60%',
+		displayField: 'fs_nama',
+		editable: false,
+		fieldLabel: 'Pembayaran',
+		id: 'cboPembayaran',
+		name: 'cboPembayaran',
+		store: grupPembayaran,
+		valueField: 'fs_kode',
+		xtype: 'combobox',
+		listeners: {
+			change: function(value) {
+				
+			}
+		}
+	};
+
+	var cellEditingQty = Ext.create('Ext.grid.plugin.CellEditing', {
+		clicksToEdit: 2,
+		listeners: {
+			edit: function(editor, e) {
+				fnTotalBill();
+			}
+		}
+	});
+
+	// GRID DETAIL
+	var gridOrderDetail = Ext.create('Ext.grid.Panel', {
 		anchor: '100%',
 		defaultType: 'textfield',
 		height: 225,
 		sortableColumns: false,
-		store: '',
+		store: grupOrderDetail,
 		columns: [{
 			xtype: 'rownumberer',
 			width: 25
@@ -427,7 +580,11 @@ Ext.onReady(function() {
 			dataIndex: 'fn_qty',
 			text: 'Qty',
 			flex: 0.3,
-			menuDisabled: true
+			menuDisabled: true,
+			editor: {
+				editable: true,
+				xtype: 'numberfield'
+			}
 		},{
 			dataIndex: 'fn_harga',
 			text: 'Harga',
@@ -444,14 +601,10 @@ Ext.onReady(function() {
 				emptyText: 'Kode Menu',
 				fieldLabel: 'Kode',
 				labelAlign: 'top',
+				editable: false,
 				id: 'cboKodeMenu',
 				name: 'cboKodeMenu',
 				xtype: 'textfield',
-				listeners: {
-					change: function(field, newValue) {
-
-					}
-				},
 				triggers: {
 					reset: {
 						cls: 'x-form-clear-trigger',
@@ -497,18 +650,6 @@ Ext.onReady(function() {
 					mouseWheelEnabled: false,
 					thousandSeparator: ',',
 					useThousandSeparator: true,
-					//value: 0,
-					listeners: {
-						change: function(value) {
-							if (Ext.isEmpty(Ext.getCmp('txtHarga').getValue())) {
-								Ext.getCmp('txtHarga').setValue(0);
-							}
-							else {
-								//LuxTax();
-								//return value;
-							}
-						}
-					}
 				})
 			]
 		},{
@@ -523,17 +664,73 @@ Ext.onReady(function() {
 				handler: function() {
 					var xtotal = grupOrderDetail.getCount();
 
-					var xdata = Ext.create('DataGridOrderDetail', {
+					var xkode = Ext.getCmp('cboKodeMenu').getValue();
+					var xdata = Ext.create('DataGridDetail', {
 						fs_kode_menu: Ext.getCmp('cboKodeMenu').getValue(),
 						fs_nama_menu: Ext.getCmp('txtNamaMenu').getValue(),
+						fn_qty: '0',
+						fn_harga: Ext.getCmp('txtHarga').getValue()
 					});
+
+					var store = gridOrderDetail.getStore();
+					var xlanjut = true;
+
+					store.each(function(record, idx) {
+						var xtext = record.get('fs_kode_menu');
+						if (xtext == xkode) {
+							Ext.MessageBox.show({
+								buttons: Ext.MessageBox.OK,
+								closable: false,
+								icon: Ext.Msg.WARNING,
+								msg: 'Menu sudah ada di List...',
+								title: 'RESTO'
+							});
+							xlanjut = false;
+						}
+					});
+
+					if (xlanjut === false) {
+						return;
+					}
+
+					var xnama = Ext.getCmp('txtNamaMenu').getValue();
+					if (xnama === '') {
+						Ext.MessageBox.show({
+							buttons: Ext.MessageBox.OK,
+							closable: false,
+							icon: Ext.Msg.WARNING,
+							msg: 'Nama Menu, belum diisi..',
+							title: 'RESTO'
+						});
+						return;
+					}
+
+					var xharga = Ext.getCmp('txtHarga').getValue();
+					if (xharga === '') {
+						Ext.MessageBox.show({
+							buttons: Ext.MessageBox.OK,
+							closable: false,
+							icon: Ext.Msg.WARNING,
+							msg: 'Harga, belum diisi..',
+							title: 'RESTO'
+						});
+						return;
+					}
+
+					grupOrderDetail.insert(xtotal, xdata);
+					Ext.getCmp('cboKodeMenu').setValue('');
+					Ext.getCmp('txtNamaMenu').setValue('');
+					Ext.getCmp('txtHarga').setValue('');
+
+					xtotal = grupOrderDetail.getCount() - 1;
+					gridOrderDetail.getSelectionModel().select(xtotal);
 				}
 			},{
 				iconCls: 'icon-delete',
 				itemId: 'removeData',
 				text: 'Delete',
 				handler: function() {
-
+					var record = gridOrderDetail.getSelectionModel().getSelection()[0];
 				},
 				disabled: true
 			}]
@@ -542,11 +739,14 @@ Ext.onReady(function() {
 			displayInfo: true,
 			pageSize: 25,
 			plugins: Ext.create('Ext.ux.ProgressBarPager', {}),
-			store: ''
+			store: grupOrderDetail
 		}),
+		plugins: [
+			cellEditingQty
+		],
 		listeners: {
 			selectionchange: function(view, records) {
-				gridOrder.down('#removeData').setDisabled(!records.length);
+				gridOrderDetail.down('#removeData').setDisabled(!records.length);
 			}
 		},
 		viewConfig: {
@@ -559,41 +759,95 @@ Ext.onReady(function() {
 	});
 
 	// GRID HISTORY
-	var gridHistory = Ext.create('Ext.grid.Panel', {
+	var gridOrderHistory = Ext.create('Ext.grid.Panel', {
 		anchor: '100%',
 		defaultType: 'textfield',
-		height: 450,
+		height: 400,
 		sortableColumns: false,
-		store: '',
+		store: grupOrderHeader,
 		columns: [{
 			xtype: 'rownumberer',
 			width: 25
 		},{
 			text: 'No. Order',
-			dataIndex: 'fs_kode_referensi',
+			dataIndex: 'fs_no_order',
 			menuDisabled: true,
-			width: 130
+			flex: 0.5
 		},{
 			text: 'Tanggal',
 			dataIndex: 'fd_tanggal_order',
 			menuDisabled: true,
-			width: 50
+			flex: 0.5,
+			renderer: Ext.util.Format.dateRenderer('d-m-Y')
 		},{
 			text: 'Nama Tamu',
 			dataIndex: 'fs_nama_tamu',
 			menuDisabled: true,
-			width: 50
+			flex: 1.5
 		},{
 			text: 'No. Meja',
 			dataIndex: 'fs_no_meja',
 			menuDisabled: true,
-			width: 200
+			flex: 0.5
+		},{
+			text: 'Sub. Total',
+			dataIndex: 'fn_subtotal',
+			menuDisabled: true,
+			flex: 0.5,
+			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+		},{
+			text: 'Serv. Charge',
+			dataIndex: 'fn_serv_charge',
+			menuDisabled: true,
+			flex: 0.5,
+			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+		},{
+			text: 'PPN',
+			dataIndex: 'fn_ppn',
+			menuDisabled: true,
+			flex: 0.5,
+			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+		},{
+			text: 'Total',
+			dataIndex: 'fn_total_bill',
+			menuDisabled: true,
+			flex: 1,
+			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+		}],
+		tbar: [{
+			flex: 2.8,
+			layout: 'anchor',
+			xtype: 'container',
+			items: [{
+				anchor: '98%',
+				emptyText: 'No. Order / Nama Tamu',
+				id: 'txtCari',
+				name: 'txtCari',
+				xtype: 'textfield'
+			}]
+		},{
+			flex: 0.5,
+			layout: 'anchor',
+			xtype: 'container',
+			items: [{
+				anchor: '100%',
+				text: 'Search',
+				xtype: 'button',
+				handler: function() {
+					grupOrderHeader.load();
+				}
+			}]
+		},{
+			flex: 0.1,
+			layout: 'anchor',
+			xtype: 'container',
+			items: []
 		}],
 		bbar: Ext.create('Ext.PagingToolbar', {
 			displayInfo: true,
 			pageSize: 25,
 			plugins: Ext.create('Ext.ux.ProgressBarPager', {}),
-			store: ''
+			store: grupOrderHeader
 		}),
 		viewConfig: {
 			getRowClass: function() {
@@ -607,13 +861,20 @@ Ext.onReady(function() {
 
 	// FUNCTIONS
 	function fnReset() {
+		Ext.getCmp('txtNoOrder').setValue('');
 		Ext.getCmp('txtNamaTamu').setValue('');
 		Ext.getCmp('cboMeja').setValue('');
 		Ext.getCmp('txtJumlahTamu').setValue('');
+		Ext.getCmp('cboPembayaran').setValue('');
 		Ext.getCmp('txtSubTotal').setValue(0);
 		Ext.getCmp('txtServCharge').setValue(0);
 		Ext.getCmp('txtPPN').setValue(0);
 		Ext.getCmp('txtTotalBill').setValue(0);
+		Ext.getCmp('txtUangBayar').setValue(0);
+		Ext.getCmp('txtUangKembali').setValue(0);
+
+		// LOAD DATA DETAIL
+		grupOrderDetail.load();
 	}
 
 	function fnCekSave() {
@@ -669,8 +930,16 @@ Ext.onReady(function() {
 	}
 
 	function fnSave() {
-		xkodemenu = '';
-		xhargamenu = '';
+		xkode = '';
+		xqty = '';
+		xharga = '';
+
+		var store = gridOrderDetail.getStore();
+		store.each(function(record, idx) {
+			xkode = xkode +'|'+ record.get('fs_kode_menu');
+			xqty = xqty +'|'+ record.get('fn_qty');
+			xharga = xharga +'|'+ record.get('fn_harga');
+		});
 
 		Ext.Ajax.on('beforerequest', fnMaskShow);
 		Ext.Ajax.on('requestcomplete', fnMaskHide);
@@ -684,12 +953,16 @@ Ext.onReady(function() {
 				'fs_nama_tamu': Ext.getCmp('txtNamaTamu').getValue(),
 				'fs_no_meja': Ext.getCmp('cboMeja').getValue(),
 				'fn_jumlah_tamu': Ext.getCmp('txtJumlahTamu').getValue(),
+				'fs_kode_pembayaran': Ext.getCmp('cboPembayaran').getValue(),
 				'fn_subtotal': Ext.getCmp('txtSubTotal').getValue(),
 				'fn_serv_charge': Ext.getCmp('txtServCharge').getValue(),
 				'fn_ppn': Ext.getCmp('txtPPN').getValue(),
 				'fn_total_bill': Ext.getCmp('txtTotalBill').getValue(),
-				'fs_kode_menu': '',
-				'fn_harga': '',
+				'fn_uang_bayar': Ext.getCmp('txtUangBayar').getValue(),
+				'fn_uang_kembali': Ext.getCmp('txtUangKembali').getValue(),
+				'fs_kode_menu': xkode,
+				'fn_qty': xqty,
+				'fn_harga': xharga
 			},
 			success: function(response) {
 				var xtext = Ext.decode(response.responseText);
@@ -701,9 +974,10 @@ Ext.onReady(function() {
 					title: 'RESTO'
 				});
 				fnReset();
-
 				// LOAD DATA
 				grupOrderHeader.load();
+				// SET NO ORDER
+				Ext.getCmp('txtNoOrder').setValue(xtext.counter);
 			},
 			failure: function(response) {
 				var xtext = Ext.decode(response.responseText);
@@ -749,7 +1023,7 @@ Ext.onReady(function() {
 					title: 'Form Order',
 					style: 'padding: 5px;',
 					items: [
-						gridOrder
+						gridOrderDetail
 					]
 				},{
 					xtype: 'fieldset',
@@ -766,7 +1040,8 @@ Ext.onReady(function() {
 								txtNoOrder,
 								txtNamaTamu,
 								cboMeja,
-								txtJumlahTamu
+								txtJumlahTamu,
+								cboPembayaran
 							]
 						},{
 							flex: 1,
@@ -776,7 +1051,9 @@ Ext.onReady(function() {
 								txtSubTotal,
 								txtServCharge,
 								txtPPN,
-								txtTotalBill
+								txtTotalBill,
+								txtUangBayar,
+								txtUangKembali
 							]
 						}]
 					}]
@@ -813,7 +1090,7 @@ Ext.onReady(function() {
 					title: 'Order History',
 					style: 'padding: 5px;',
 					items: [
-						gridHistory
+						gridOrderHistory
 					]
 				}]
 			}]

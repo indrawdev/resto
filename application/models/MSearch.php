@@ -9,6 +9,18 @@ class MSearch extends CI_Model {
 		$this->load->database();
 	}
 
+	public function getCounter($sJenis)
+	{
+		$xSQL = ("
+			SELECT fn_counter
+			FROM tm_counter
+			WHERE fs_jenis_counter = '".trim($sJenis)."'
+		");
+
+		$sSQL = $this->db->query($xSQL);
+		return $sSQL->row();
+	}
+
 	public function getReferensi($sKode)
 	{
 		$xSQL = ("
@@ -19,6 +31,21 @@ class MSearch extends CI_Model {
 
 		$xSQL = $xSQL.("
 			ORDER BY fs_nilai1_referensi ASC
+		");
+
+		$sSQL = $this->db->query($xSQL);
+		return $sSQL;
+	}
+
+	public function getPembayaran()
+	{
+		$xSQL = ("
+			SELECT fs_kode_pembayaran, fs_nama_pembayaran
+			FROM tm_pembayaran
+		");
+
+		$xSQL = $xSQL.("
+			ORDER BY fs_kode_pembayaran ASC
 		");
 
 		$sSQL = $this->db->query($xSQL);

@@ -24,7 +24,7 @@ class MMasterPembayaran extends CI_Model {
 	public function listPembayaranAll($sCari)
 	{
 		$xSQL = ("
-			SELECT fs_kode_pembayaran, fs_nama_pembayaran
+			SELECT fs_kode_pembayaran, fs_nama_pembayaran, fs_aktif
 			FROM tm_pembayaran
 		");
 
@@ -42,7 +42,7 @@ class MMasterPembayaran extends CI_Model {
 	public function listPembayaran($sCari, $nStart, $nLimit)
 	{
 		$xSQL = ("
-			SELECT fs_kode_pembayaran, fs_nama_pembayaran
+			SELECT fs_kode_pembayaran, fs_nama_pembayaran, fs_aktif
 			FROM tm_pembayaran
 		");
 

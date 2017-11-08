@@ -198,7 +198,12 @@ Ext.onReady(function() {
 		xtype: 'textfield',
 		minValue: 0,
 		maxLength: 30,
-		enforceMaxLength: true
+		enforceMaxLength: true,
+		listeners: {
+			change: function(field, newValue) {
+				field.setValue(newValue.toLowerCase());
+			}
+		}
 	};
 
 	var txtNilai1 = {
