@@ -84,7 +84,7 @@ Ext.onReady(function() {
 		store: grupMenu,
 		columns: [{
 			xtype: 'rownumberer',
-			width: 25
+			width: 45
 		},{
 			text: 'Kode Menu',
 			dataIndex: 'fs_kode_menu',

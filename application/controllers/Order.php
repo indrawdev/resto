@@ -145,7 +145,7 @@ class Order extends CI_Controller {
 			foreach ($sSQL->result() as $xRow) {
 				$xArr[] = array(
 					'fs_no_order' => trim($xRow->fs_no_order),
-					'fd_tanggal_order' => trim($xRow->fd_tanggal_order),
+					'fd_tanggal_buat' => trim($xRow->fd_tanggal_buat),
 					'fs_nama_tamu' => trim($xRow->fs_nama_tamu),
 					'fs_no_meja' => trim($xRow->fs_no_meja),
 					'fn_jumlah_tamu' => trim($xRow->fn_jumlah_tamu),
@@ -168,13 +168,13 @@ class Order extends CI_Controller {
 			if ($sSQL->num_rows() > 0) {
 				$hasil = array(
 					'sukses' => true,
-					'hasil' => 'Data Order sudah ada, apakah Anda ingin meng-update?'
+					'hasil' => 'Data Order '.trim($kode).' sudah ada, apakah Anda ingin meng-update?'
 				);
 				echo json_encode($hasil);
 			} else {
 				$hasil = array(
 					'sukses' => true,
-					'hasil' => 'Data Order belum ada, apakah Anda ingin menambah baru?'
+					'hasil' => 'Data Order '.trim($kode).' belum ada, apakah Anda ingin menambah baru?'
 				);
 				echo json_encode($hasil);
 			}
@@ -206,6 +206,7 @@ class Order extends CI_Controller {
 		$kodemenu = explode('|', $this->input->post('fs_kode_menu'));
 		$qty = explode('|', $this->input->post('fn_qty'));
 		$harga = explode('|', $this->input->post('fn_harga'));
+		$itemtotal = explode('|', $this->input->post('fn_itemtotal'));
 
 		$where = "fs_no_order = '".trim($kode)."'";
 		// hapus order detail
@@ -221,6 +222,7 @@ class Order extends CI_Controller {
 					'fs_kode_menu' => trim($kodemenu[$i]),
 					'fn_qty' => trim($qty[$i]),
 					'fn_harga' => trim($harga[$i]),
+					'fn_itemtotal' => trim($itemtotal[$i]),
 					'fs_user_buat' => trim($user),
 					'fd_tanggal_buat' => date('Y-m-d H:i:s')
 				);
@@ -237,8 +239,6 @@ class Order extends CI_Controller {
 		}
 
 		$dt = array(
-			'fs_no_order' => trim($kode),
-			'fd_tanggal_order' => date('Y-m-d H:i:s'),
 			'fs_nama_tamu' => trim($tamu),
 			'fs_no_meja' => trim($meja),
 			'fn_jumlah_tamu' => trim($jumlah),
@@ -253,6 +253,7 @@ class Order extends CI_Controller {
 
 		if ($update == false) {
 			$dt1 = array(
+				'fs_no_order' => trim($kode),
 				'fs_user_buat' => trim($user),
 				'fd_tanggal_buat' => date('Y-m-d H:i:s')
 			);
@@ -286,6 +287,7 @@ class Order extends CI_Controller {
 			$counter = $this->getter();
 
 			$dt2 = array(
+				'fs_no_order' => trim($kode),
 				'fs_user_edit' => trim($user),
 				'counter' => trim($counter),
 				'fd_tanggal_edit' => date('Y-m-d H:i:s')
@@ -315,7 +317,7 @@ class Order extends CI_Controller {
 		$header = $this->MOrder->getHeader($kode);
 		$detail = $this->MOrder->getDetail($kode);
 
-		$printer = new phpprint("LPT1");
+		$printer = new phpprint('LPT1');
 		// LABEL
 		$label_tanggal = str_pad('Tanggal', 15, " ", STR_PAD_RIGHT);
 		$label_jam = str_pad('Jam', 15, " ", STR_PAD_RIGHT);
@@ -336,7 +338,7 @@ class Order extends CI_Controller {
 		$separator = str_pad(':', 3, " ", STR_PAD_BOTH);
 
 		// VALUE
-		$val_tanggal = str_pad(date('n.j.Y', strtotime($header->fd_tanggal_buat)), 22, " ", STR_PAD_RIGHT);
+		$val_tanggal = str_pad(date('d/m/Y', strtotime($header->fd_tanggal_buat)), 22, " ", STR_PAD_RIGHT);
 		$val_jam = str_pad(date('H:i', strtotime($header->fd_tanggal_buat)), 22, " ", STR_PAD_RIGHT);
 		$val_tamu = str_pad($header->fs_nama_tamu, 22, " ", STR_PAD_RIGHT);
 		$val_pelayan = str_pad($header->fs_user_buat, 22, " ", STR_PAD_RIGHT);
@@ -388,7 +390,7 @@ class Order extends CI_Controller {
 				}
 				$val_qty = str_pad(number_format($value->fn_qty), 4, " ", STR_PAD_RIGHT);
 				$val_produk = str_pad($produk, 25, " ", STR_PAD_RIGHT);
-				$val_harga = str_pad(number_format($value->fn_harga), 11, " ", STR_PAD_LEFT);
+				$val_harga = str_pad(number_format($value->fn_itemtotal), 11, " ", STR_PAD_LEFT);
 
 				$printer->text($val_qty . $val_produk . $val_harga);
 				$printer->newline();
@@ -423,8 +425,8 @@ class Order extends CI_Controller {
 		$this->load->model('MOrder');
 		$header = $this->MOrder->getHeader($kode);
 		$detail = $this->MOrder->getDetail($kode);
-
-		$printer = new phpprint("LPT1");
+		
+		$printer = new phpprint('LPT1');
 		// LABEL
 		$label_tanggal = str_pad('Tanggal', 15, " ", STR_PAD_RIGHT);
 		$label_jam = str_pad('Jam', 15, " ", STR_PAD_RIGHT);
@@ -445,7 +447,7 @@ class Order extends CI_Controller {
 		$separator = str_pad(':', 3, " ", STR_PAD_BOTH);
 
 		// VALUE
-		$val_tanggal = str_pad(date('n.j.Y', strtotime($header->fd_tanggal_buat)), 22, " ", STR_PAD_RIGHT);
+		$val_tanggal = str_pad(date('d/m/Y', strtotime($header->fd_tanggal_buat)), 22, " ", STR_PAD_RIGHT);
 		$val_jam = str_pad(date('H:i', strtotime($header->fd_tanggal_buat)), 22, " ", STR_PAD_RIGHT);
 		$val_tamu = str_pad($header->fs_nama_tamu, 22, " ", STR_PAD_RIGHT);
 		$val_pelayan = str_pad($header->fs_user_buat, 22, " ", STR_PAD_RIGHT);
@@ -497,7 +499,7 @@ class Order extends CI_Controller {
 				}
 				$val_qty = str_pad(number_format($value->fn_qty), 4, " ", STR_PAD_RIGHT);
 				$val_produk = str_pad($produk, 25, " ", STR_PAD_RIGHT);
-				$val_harga = str_pad(number_format($value->fn_harga), 11, " ", STR_PAD_LEFT);
+				$val_harga = str_pad(number_format($value->fn_itemtotal), 11, " ", STR_PAD_LEFT);
 
 				$printer->text($val_qty . $val_produk . $val_harga);
 				$printer->newline();

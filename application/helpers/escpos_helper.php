@@ -63,6 +63,7 @@ class phpprint {
 	const BARCODE_ITF = 5;
 	const BARCODE_CODABAR = 6;
 	private $fp;
+	
 	function __construct($head = null) {
 		//THIS IS THE SERIAL PORT YOU ARE OPENING
 		$fp = fopen($head,"w");

@@ -24,7 +24,7 @@ class MOrder extends CI_Model {
 	public function listHeaderAll($sCari)
 	{
 		$xSQL = ("
-			SELECT fs_no_order, fd_tanggal_order, fs_nama_tamu, 
+			SELECT fs_no_order, fd_tanggal_buat, fs_nama_tamu, 
 				fs_no_meja, fn_jumlah_tamu, fs_kode_pembayaran,
 				fn_subtotal, fn_serv_charge, fn_ppn, fn_total_bill
 			FROM tx_order_header
@@ -44,7 +44,7 @@ class MOrder extends CI_Model {
 	public function listHeader($sCari, $nStart, $nLimit)
 	{
 		$xSQL = ("
-			SELECT fs_no_order, fd_tanggal_order, fs_nama_tamu, 
+			SELECT fs_no_order, fd_tanggal_buat, fs_nama_tamu, 
 				fs_no_meja, fn_jumlah_tamu, fs_kode_pembayaran,
 				fn_subtotal, fn_serv_charge, fn_ppn, fn_total_bill
 			FROM tx_order_header
@@ -68,7 +68,7 @@ class MOrder extends CI_Model {
 	public function listDetailAll($sKode)
 	{
 		$xSQL = ("
-			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_harga, b.fs_nama_menu
+			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_harga, a.fn_itemtotal, b.fs_nama_menu
 			FROM tx_order_detail a
 			LEFT JOIN tm_menu b ON b.fs_kode_menu = a.fs_kode_menu
 			WHERE a.fs_no_order = '".trim($sKode)."'
@@ -81,7 +81,7 @@ class MOrder extends CI_Model {
 	public function listDetail($sKode, $nStart, $nLimit)
 	{
 		$xSQL = ("
-			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_harga, b.fs_nama_menu
+			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_harga, a.fn_itemtotal, b.fs_nama_menu
 			FROM tx_order_detail a
 			LEFT JOIN tm_menu b ON b.fs_kode_menu = a.fs_kode_menu
 			WHERE a.fs_no_order = '".trim($sKode)."'
@@ -98,7 +98,7 @@ class MOrder extends CI_Model {
 	public function getHeader($sKode)
 	{
 		$xSQL = ("
-			SELECT fd_tanggal_order, fs_nama_tamu, fs_no_meja, fn_jumlah_tamu,
+			SELECT fs_nama_tamu, fs_no_meja, fn_jumlah_tamu,
 				fs_kode_pembayaran, fn_subtotal, fn_serv_charge,
 				fn_ppn, fn_total_bill, fn_uang_bayar, fn_uang_kembali,
 				fs_user_buat, fd_tanggal_buat
@@ -113,7 +113,7 @@ class MOrder extends CI_Model {
 	public function getDetail($sKode)
 	{
 		$xSQL = ("
-			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_qty, a.fn_harga, b.fs_nama_menu
+			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_qty, a.fn_harga, a.fn_itemtotal, b.fs_nama_menu
 			FROM tx_order_detail a
 			LEFT JOIN tm_menu b ON b.fs_kode_menu = a.fs_kode_menu
 			WHERE a.fs_no_order = '".trim($sKode)."'

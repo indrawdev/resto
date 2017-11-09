@@ -22,7 +22,7 @@ Ext.onReady(function() {
 		border: false,
 		frame: true,
 		region: 'center',
-		title: 'Order',
+		title: 'History',
 		width: 930,
 		items: [{
 			

@@ -43,7 +43,7 @@ Ext.onReady(function() {
 		extend: 'Ext.data.Model',
 		fields: [
 			{name: 'fs_no_order', type: 'string'},
-			{name: 'fd_tanggal_order', type: 'string'},
+			{name: 'fd_tanggal_buat', type: 'string'},
 			{name: 'fs_nama_tamu', type: 'string'},
 			{name: 'fs_no_meja', type: 'string'},
 			{name: 'fn_jumlah_tamu', type: 'string'},
@@ -61,7 +61,8 @@ Ext.onReady(function() {
 			{name: 'fs_kode_menu', type: 'string'},
 			{name: 'fs_nama_menu', type: 'string'},
 			{name: 'fn_qty', type: 'int'},
-			{name: 'fn_harga', type: 'string'}
+			{name: 'fn_harga', type: 'string'},
+			{name: 'fn_itemtotal', type: 'string'}
 		]
 	});
 
@@ -192,6 +193,15 @@ Ext.onReady(function() {
 	});
 
 	// COUNTING FUNCTION
+	function fnEditQty() {
+		var record = gridOrderDetail.getSelectionModel().getSelection()[0];
+		var xqty = record.get('fn_harga');
+		var xharga = record.get('fn_qty');
+		var xitemtotal = xqty * xharga;
+		record.set('fn_itemtotal', xitemtotal);
+		fnTotalBill();
+	}
+
 	function fnTotalBill() {
 		var xsubtotal = 0;
 		var xservcharge = 0;
@@ -204,13 +214,25 @@ Ext.onReady(function() {
 		});
 
 		xservcharge = xsubtotal * 0.055;
-		xppntotal = xsubtotal * 0.1;
+		xppntotal = (xsubtotal + xservcharge) * 0.1;
 		xtotalbill = xsubtotal + xservcharge + xppntotal;
 
 		Ext.getCmp('txtSubTotal').setValue(xsubtotal);
 		Ext.getCmp('txtServCharge').setValue(xservcharge);
 		Ext.getCmp('txtPPN').setValue(xppntotal);
 		Ext.getCmp('txtTotalBill').setValue(xtotalbill);
+	}
+
+	function fnPembayaran(value) {
+		var xtotalbill = 0;
+		xtotalbill = Ext.getCmp('txtTotalBill').getValue();
+		if (value !== 'CA') {
+			Ext.getCmp('txtUangBayar').setValue(xtotalbill);
+			return;
+		} else {
+			Ext.getCmp('txtUangBayar').setValue(0);
+			return;
+		}
 	}
 
 	function fnUangKembali() {
@@ -250,7 +272,7 @@ Ext.onReady(function() {
 			dataIndex: 'fn_harga',
 			menuDisabled: true,
 			flex: 1,
-			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		}],
 		tbar: [{
 			flex: 2.8,
@@ -498,7 +520,12 @@ Ext.onReady(function() {
 		value: 'UMUM',
 		minValue: 0,
 		maxLength: 45,
-		enforceMaxLength: true
+		enforceMaxLength: true,
+		listeners: {
+			change: function(field, newValue) {
+				field.setValue(newValue.toUpperCase());
+			}
+		}
 	};
 
 	var cboMeja = {
@@ -542,7 +569,7 @@ Ext.onReady(function() {
 		xtype: 'combobox',
 		listeners: {
 			change: function(value) {
-				
+
 			}
 		}
 	};
@@ -551,7 +578,7 @@ Ext.onReady(function() {
 		clicksToEdit: 2,
 		listeners: {
 			edit: function(editor, e) {
-				fnTotalBill();
+				fnEditQty();
 			}
 		}
 	});
@@ -590,7 +617,13 @@ Ext.onReady(function() {
 			text: 'Harga',
 			flex: 0.8,
 			menuDisabled: true,
-			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+			renderer: Ext.util.Format.numberRenderer('0,000,000')
+		},{
+			dataIndex: 'fn_itemtotal',
+			text: 'Total',
+			flex: 0.8,
+			menuDisabled: true,
+			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		}],
 		tbar: [{
 			flex: 1,
@@ -669,7 +702,8 @@ Ext.onReady(function() {
 						fs_kode_menu: Ext.getCmp('cboKodeMenu').getValue(),
 						fs_nama_menu: Ext.getCmp('txtNamaMenu').getValue(),
 						fn_qty: '0',
-						fn_harga: Ext.getCmp('txtHarga').getValue()
+						fn_harga: Ext.getCmp('txtHarga').getValue(),
+						fn_itemtotal: '0'
 					});
 
 					var store = gridOrderDetail.getStore();
@@ -730,17 +764,30 @@ Ext.onReady(function() {
 				itemId: 'removeData',
 				text: 'Delete',
 				handler: function() {
-					var record = gridOrderDetail.getSelectionModel().getSelection()[0];
+					var sm = gridOrderDetail.getSelectionModel();
+					grupOrderDetail.remove(sm.getSelection());
+					gridOrderDetail.getView().refresh();
+					if (grupOrderDetail.getCount() > 0) {
+						sm.select(0);
+					}
+					gridOrderDetail.getView().refresh();
+					fnTotalBill();
 				},
 				disabled: true
 			}]
 		}],
-		bbar: Ext.create('Ext.PagingToolbar', {
-			displayInfo: true,
-			pageSize: 25,
-			plugins: Ext.create('Ext.ux.ProgressBarPager', {}),
-			store: grupOrderDetail
-		}),
+		bbar: [{
+			flex: 1,
+			layout: 'anchor',
+			xtype: 'container',
+			items: [{
+				id: 'txtToolTip',
+				labelWidth: 65,
+				name: 'txtToolTip',
+				value: '<* Double click on the Qty>',
+				xtype: 'displayfield'
+			}]
+		}],
 		plugins: [
 			cellEditingQty
 		],
@@ -775,7 +822,7 @@ Ext.onReady(function() {
 			flex: 0.5
 		},{
 			text: 'Tanggal',
-			dataIndex: 'fd_tanggal_order',
+			dataIndex: 'fd_tanggal_buat',
 			menuDisabled: true,
 			flex: 0.5,
 			renderer: Ext.util.Format.dateRenderer('d-m-Y')
@@ -783,7 +830,7 @@ Ext.onReady(function() {
 			text: 'Nama Tamu',
 			dataIndex: 'fs_nama_tamu',
 			menuDisabled: true,
-			flex: 1.5
+			flex: 1.2
 		},{
 			text: 'No. Meja',
 			dataIndex: 'fs_no_meja',
@@ -794,25 +841,44 @@ Ext.onReady(function() {
 			dataIndex: 'fn_subtotal',
 			menuDisabled: true,
 			flex: 0.5,
-			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		},{
 			text: 'Serv. Charge',
 			dataIndex: 'fn_serv_charge',
 			menuDisabled: true,
 			flex: 0.5,
-			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		},{
 			text: 'PPN',
 			dataIndex: 'fn_ppn',
 			menuDisabled: true,
 			flex: 0.5,
-			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		},{
 			text: 'Total',
 			dataIndex: 'fn_total_bill',
 			menuDisabled: true,
 			flex: 1,
-			renderer: Ext.util.Format.numberRenderer('0,000,000,-')
+			renderer: Ext.util.Format.numberRenderer('0,000,000')
+		},{
+			width: 80,
+			align: 'center',
+			renderer: function(val, meta, rec) {
+				var id = Ext.id();
+				Ext.defer(function() {
+					Ext.widget('button', {
+						renderTo: id,
+						text: 'REPRINT',
+						scale: 'small',
+						handler: function() {
+							var xorder = rec.get('fs_no_order');
+							// CALL BACK
+							fnRePrint(xorder);
+						}
+					});
+				}, 50);
+				return Ext.String.format('<div id="{0}"></div>', id);
+			}
 		}],
 		tbar: [{
 			flex: 2.8,
@@ -933,12 +999,14 @@ Ext.onReady(function() {
 		xkode = '';
 		xqty = '';
 		xharga = '';
+		xitemtotal = '';
 
 		var store = gridOrderDetail.getStore();
 		store.each(function(record, idx) {
 			xkode = xkode +'|'+ record.get('fs_kode_menu');
 			xqty = xqty +'|'+ record.get('fn_qty');
 			xharga = xharga +'|'+ record.get('fn_harga');
+			xitemtotal = xitemtotal +'|'+ record.get('fn_itemtotal');
 		});
 
 		Ext.Ajax.on('beforerequest', fnMaskShow);
@@ -962,7 +1030,8 @@ Ext.onReady(function() {
 				'fn_uang_kembali': Ext.getCmp('txtUangKembali').getValue(),
 				'fs_kode_menu': xkode,
 				'fn_qty': xqty,
-				'fn_harga': xharga
+				'fn_harga': xharga,
+				'fn_itemtotal': xitemtotal
 			},
 			success: function(response) {
 				var xtext = Ext.decode(response.responseText);
@@ -989,6 +1058,35 @@ Ext.onReady(function() {
 					title: 'RESTO'
 				});
 				fnMaskHide();
+			}
+		});
+	}
+
+	function fnRePrint(xorder) {
+		Ext.Ajax.on('beforerequest', fnMaskShow);
+		Ext.Ajax.on('requestcomplete', fnMaskHide);
+		Ext.Ajax.on('requestexception', fnMaskHide);
+
+		Ext.Ajax.request({
+			method: 'POST',
+			url: 'order/printall/' + xorder,
+			success: function(response) {
+				Ext.MessageBox.show({
+					buttons: Ext.MessageBox.OK,
+					closable: false,
+					icon: Ext.MessageBox.INFO,
+					msg: 'Cetak Billing, Sukses!!',
+					title: 'RESTO'
+				});
+			},
+			failure: function(response) {
+				Ext.MessageBox.show({
+					buttons: Ext.MessageBox.OK,
+					closable: false,
+					icon: Ext.MessageBox.INFO,
+					message: 'Load default value Failed, Connection Failed!!',
+					title: 'RESTO'
+				});
 			}
 		});
 	}
