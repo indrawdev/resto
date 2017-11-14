@@ -246,6 +246,18 @@ Ext.onReady(function() {
 		Ext.getCmp('txtUangKembali').setValue(xuangkembali);
 	}
 
+	function fnTanpaPajak() {
+		var xsubtotal = 0;
+		var xservcharge = 0;
+		var xppn = 0;
+
+		Ext.getCmp('txtServCharge').setValue(xservcharge);
+		Ext.getCmp('txtPPN').setValue(xppn);
+
+		xsubtotal = Ext.getCmp('txtSubTotal').getValue();
+		Ext.getCmp('txtTotalBill').setValue(xsubtotal);
+	}
+
 	// POPUP MENU
 	var winGrid = Ext.create('Ext.grid.Panel',{
 		anchor: '100%',
@@ -412,7 +424,7 @@ Ext.onReady(function() {
 
 	var txtPPN = {
 		alwaysDisplayDecimals: true,
-		anchor: '98%',
+		anchor: '97%',
 		currencySymbol: 'Rp.',
 		decimalPrecision: 0,
 		decimalSeparator: '.',
@@ -570,6 +582,24 @@ Ext.onReady(function() {
 		listeners: {
 			change: function(value) {
 
+			}
+		}
+	};
+
+	var checkPajak = {
+		boxLabel: 'Include (TAX)',
+		id: 'checkPajak',
+		name: 'checkPajak',
+		xtype: 'checkboxfield',
+		checked: true,
+		listeners: {
+			change: function(checkbox, isChecked) {
+				if (isChecked) {
+					fnTotalBill();
+				}
+				else {
+					fnTanpaPajak();
+				}
 			}
 		}
 	};
@@ -1148,7 +1178,26 @@ Ext.onReady(function() {
 							items: [
 								txtSubTotal,
 								txtServCharge,
-								txtPPN,
+								{
+									anchor: '100%',
+									layout: 'hbox',
+									xtype: 'container',
+									items: [{
+										flex: 1,
+										layout: 'anchor',
+										xtype: 'container',
+										items: [
+											checkPajak
+										]
+									},{
+										flex: 2,
+										layout: 'anchor',
+										xtype: 'container',
+										items: [
+											txtPPN
+										]
+									}]
+								},
 								txtTotalBill,
 								txtUangBayar,
 								txtUangKembali
