@@ -103,15 +103,15 @@ class Order extends CI_Controller {
 	}
 	
 	public function gridorderdetail() {
-		$sCari = trim($this->input->post('fs_cari'));
+		$nOrder = $this->input->post('fs_no_order');
 		$nStart = trim($this->input->post('start'));
 		$nLimit = trim($this->input->post('limit'));
 
 		$this->db->trans_start();
 		$this->load->model('MOrder');
-		$sSQL = $this->MOrder->listDetailAll($sCari);
+		$sSQL = $this->MOrder->listDetailAll($nOrder);
 		$xTotal = $sSQL->num_rows();
-		$sSQL = $this->MOrder->listDetail($sCari, $nStart, $nLimit);
+		$sSQL = $this->MOrder->listDetail($nOrder, $nStart, $nLimit);
 		$this->db->trans_complete();
 
 		$xArr = array();
@@ -121,7 +121,9 @@ class Order extends CI_Controller {
 					'fs_no_order' => trim($xRow->fs_no_order),
 					'fs_kode_menu' => trim($xRow->fs_kode_menu),
 					'fs_nama_menu' => trim($xRow->fs_nama_menu),
-					'fn_harga' => trim($xRow->fn_harga)
+					'fn_harga' => trim($xRow->fn_harga),
+					'fn_qty' => trim($xRow->fn_qty),
+					'fn_itemtotal' => trim($xRow->fn_itemtotal)
 				);
 			}
 		}
@@ -129,15 +131,16 @@ class Order extends CI_Controller {
 	}
 
 	public function gridorderhistory() {
+		$dPeriod = trim($this->input->post('fd_mmyy'));
 		$sCari = trim($this->input->post('fs_cari'));
 		$nStart = trim($this->input->post('start'));
 		$nLimit = trim($this->input->post('limit'));
 
 		$this->db->trans_start();
 		$this->load->model('MOrder');
-		$sSQL = $this->MOrder->listHeaderAll($sCari);
+		$sSQL = $this->MOrder->listHeaderAll($dPeriod, $sCari);
 		$xTotal = $sSQL->num_rows();
-		$sSQL = $this->MOrder->listHeader($sCari, $nStart, $nLimit);
+		$sSQL = $this->MOrder->listHeader($dPeriod, $sCari, $nStart, $nLimit);
 		$this->db->trans_complete();
 
 		$xArr = array();
@@ -153,7 +156,9 @@ class Order extends CI_Controller {
 					'fn_subtotal' => trim($xRow->fn_subtotal),
 					'fn_serv_charge' => trim($xRow->fn_serv_charge),
 					'fn_ppn' => trim($xRow->fn_ppn),
-					'fn_total_bill' => trim($xRow->fn_total_bill)
+					'fn_total_bill' => trim($xRow->fn_total_bill),
+					'fn_uang_bayar' => trim($xRow->fn_uang_bayar),
+					'fn_uang_kembali' => trim($xRow->fn_uang_kembali)
 				);
 			}
 		}
@@ -267,8 +272,8 @@ class Order extends CI_Controller {
 			// GET COUNTER
 			$counter = $this->getter();
 
-			// PRINT ALL 
-			$this->printall($kode);
+			// PRINT BILL ONLY
+			$this->printbill($kode);
 
 			// START LOGGING
 			$this->load->model('MLog');
@@ -285,6 +290,9 @@ class Order extends CI_Controller {
 
 			// GET COUNTER
 			$counter = $this->getter();
+
+			// PRINT PAYMENT BILL ONLY
+			//$this->printpaymentbill($kode);
 
 			$dt2 = array(
 				'fs_no_order' => trim($kode),
@@ -538,5 +546,15 @@ class Order extends CI_Controller {
 	public function printall($kode) {
 		$this->printbill($kode);
 		$this->printpaymentbill($kode);
+	}
+
+	public function exportexcel($periode) {
+		$this->load->model('MOrder');
+		$this->load->helper('day');
+
+		$data['bulan'] = bulan_indo($periode);
+		$data['detail'] = $this->MOrder->getReport($periode);
+
+		$this->load->view('print/vexportexcel', $data);
 	}
 }

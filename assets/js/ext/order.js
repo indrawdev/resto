@@ -18,6 +18,89 @@ Ext.onReady(function() {
 
 	var required = '<span style="color:red;font-weight:bold" data-qtip="Required">*</span>';
 
+	Ext.define('Ext.form.field.Month', {
+        extend: 'Ext.form.field.Date',
+        alias: 'widget.monthfield',
+        requires: ['Ext.picker.Month'],
+        alternateClassName: ['Ext.form.MonthField', 'Ext.form.Month'],
+        selectMonth: null,
+        createPicker: function () {
+		    var me = this,
+		        format = Ext.String.format,
+		        pickerConfig;
+
+		    pickerConfig = {
+		        pickerField: me,
+		        ownerCmp: me,
+		        renderTo: document.body,
+		        floating: true,
+		        hidden: true,
+		        focusOnShow: true,
+		        minDate: me.minValue,
+		        maxDate: me.maxValue,
+		        disabledDatesRE: me.disabledDatesRE,
+		        disabledDatesText: me.disabledDatesText,
+		        disabledDays: me.disabledDays,
+		        disabledDaysText: me.disabledDaysText,
+		        format: me.format,
+		        showToday: me.showToday,
+		        startDay: me.startDay,
+		        minText: format(me.minText, me.formatDate(me.minValue)),
+		        maxText: format(me.maxText, me.formatDate(me.maxValue)),
+		        listeners: {
+		            select: { scope: me, fn: me.onSelect },
+		            monthdblclick: { scope: me, fn: me.onOKClick },
+		            yeardblclick: { scope: me, fn: me.onOKClick },
+		            OkClick: { scope: me, fn: me.onOKClick },
+		            CancelClick: { scope: me, fn: me.onCancelClick }
+		        },
+		        keyNavConfig: {
+		            esc: function () {
+		                me.collapse();
+		            }
+		        }
+		    };
+
+		    if (Ext.isChrome) {
+		        me.originalCollapse = me.collapse;
+		        pickerConfig.listeners.boxready = {
+		            fn: function () {
+		                this.picker.el.on({
+		                    mousedown: function () {
+		                        this.collapse = Ext.emptyFn;
+		                    },
+		                    mouseup: function () {
+		                        this.collapse = this.originalCollapse;
+		                    },
+		                    scope: this
+		                });
+		            },
+		            scope: me,
+		            single: true
+		        }
+		    }
+
+		    return Ext.create('Ext.picker.Month', pickerConfig);
+		},
+        onCancelClick: function() {
+            var me = this;
+            me.selectMonth = null;
+            me.collapse();
+        },
+        onOKClick: function() {
+            var me = this;
+            if (me.selectMonth) {
+                me.setValue(me.selectMonth);
+                me.fireEvent('select', me, me.selectMonth);
+            }
+            me.collapse();
+        },
+        onSelect: function(m, d) {
+            var me = this;
+            me.selectMonth = new Date((d[0] + 1) + '/1/' + d[1]);
+        }
+    });
+
 	Ext.Ajax.request({
 		method: 'POST',
 		url: 'order/getorder',
@@ -95,7 +178,8 @@ Ext.onReady(function() {
 		listeners: {
 			beforeload: function(store) {
 				Ext.apply(store.getProxy().extraParams, {
-					'fs_cari': Ext.getCmp('txtCari').getValue()
+					'fs_cari': Ext.getCmp('txtCari').getValue(),
+					'fd_mmyy': Ext.getCmp('cboPeriode').getValue()
 				});
 			}
 		}
@@ -854,41 +938,48 @@ Ext.onReady(function() {
 			text: 'Tanggal',
 			dataIndex: 'fd_tanggal_buat',
 			menuDisabled: true,
+			align: 'center',
 			flex: 0.5,
 			renderer: Ext.util.Format.dateRenderer('d-m-Y')
 		},{
 			text: 'Nama Tamu',
 			dataIndex: 'fs_nama_tamu',
 			menuDisabled: true,
+			align: 'center',
 			flex: 1.2
 		},{
 			text: 'No. Meja',
 			dataIndex: 'fs_no_meja',
 			menuDisabled: true,
+			align: 'center',
 			flex: 0.5
 		},{
 			text: 'Sub. Total',
 			dataIndex: 'fn_subtotal',
 			menuDisabled: true,
 			flex: 0.5,
+			align: 'right',
 			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		},{
 			text: 'Serv. Charge',
 			dataIndex: 'fn_serv_charge',
 			menuDisabled: true,
 			flex: 0.5,
+			align: 'right',
 			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		},{
 			text: 'PPN',
 			dataIndex: 'fn_ppn',
 			menuDisabled: true,
 			flex: 0.5,
+			align: 'right',
 			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		},{
 			text: 'Total',
 			dataIndex: 'fn_total_bill',
 			menuDisabled: true,
 			flex: 1,
+			align: 'right',
 			renderer: Ext.util.Format.numberRenderer('0,000,000')
 		},{
 			width: 80,
@@ -909,8 +1000,41 @@ Ext.onReady(function() {
 				}, 50);
 				return Ext.String.format('<div id="{0}"></div>', id);
 			}
+		},{
+			text: 'Jumlah Tamu',
+			dataIndex: 'fn_jumlah_tamu',
+			menuDisabled: true,
+			hidden: true
+		},{
+			text: 'Pembayaran',
+			dataIndex: 'fs_kode_pembayaran',
+			menuDisabled: true,
+			hidden: true
+		},{
+			text: 'Uang Bayar',
+			dataIndex: 'fn_uang_bayar',
+			menuDisabled: true,
+			hidden: true
+		},{
+			text: 'Uang Kembali',
+			dataIndex: 'fn_uang_kembali',
+			menuDisabled: true,
+			hidden: true
 		}],
 		tbar: [{
+			flex: 2.8,
+			layout: 'anchor',
+			xtype: 'container',
+			items: [{
+				anchor: '98%',
+				id: 'cboPeriode',
+				name: 'cboPeriode',
+				xtype: 'monthfield',
+				submitFormat: 'Y-m-d',
+				format: 'F, Y',
+				value: new Date()
+			}]
+		},{
 			flex: 2.8,
 			layout: 'anchor',
 			xtype: 'container',
@@ -945,6 +1069,31 @@ Ext.onReady(function() {
 			plugins: Ext.create('Ext.ux.ProgressBarPager', {}),
 			store: grupOrderHeader
 		}),
+		listeners: {
+			itemdblclick: function(grid, record) {
+				// SET RECORD IN TAB FORM ORDER
+				Ext.getCmp('txtNoOrder').setValue(record.get('fs_no_order'));
+				Ext.getCmp('txtNamaTamu').setValue(record.get('fs_nama_tamu'));
+				Ext.getCmp('cboMeja').setValue(record.get('fs_no_meja'));
+				Ext.getCmp('txtSubTotal').setValue(record.get('fn_subtotal'));
+				Ext.getCmp('txtServCharge').setValue(record.get('fn_serv_charge'));
+				Ext.getCmp('txtPPN').setValue(record.get('fn_ppn'));
+				Ext.getCmp('txtTotalBill').setValue(record.get('fn_total_bill'));
+
+				// SET RECORD
+				Ext.getCmp('txtJumlahTamu').setValue(record.get('fn_jumlah_tamu'));
+				Ext.getCmp('cboPembayaran').setValue(record.get('fs_kode_pembayaran'));
+				Ext.getCmp('txtUangBayar').setValue(record.get('fn_uang_bayar'));
+				Ext.getCmp('txtUangKembali').setValue(record.get('fn_uang_kembali'));
+
+				// LOAD DATA DETAIL ORDER
+				grupOrderDetail.load();
+
+				// CHANGE TAB
+				var tabPanel = Ext.ComponentQuery.query('tabpanel')[0];
+				tabPanel.setActiveTab('tab1');
+			}
+		},
 		viewConfig: {
 			getRowClass: function() {
 				return 'rowwrap';
@@ -953,7 +1102,6 @@ Ext.onReady(function() {
 			stripeRows: true
 		}
 	});
-
 
 	// FUNCTIONS
 	function fnReset() {
@@ -1092,6 +1240,37 @@ Ext.onReady(function() {
 		});
 	}
 
+	function fnPrintPay() {
+		var xorder = Ext.getCmp('txtNoOrder').getValue();
+
+		Ext.Ajax.on('beforerequest', fnMaskShow);
+		Ext.Ajax.on('requestcomplete', fnMaskHide);
+		Ext.Ajax.on('requestexception', fnMaskHide);
+
+		Ext.Ajax.request({
+			method: 'POST',
+			url: 'order/printpaymentbill/' + xorder,
+			success: function(response) {
+				Ext.MessageBox.show({
+					buttons: Ext.MessageBox.OK,
+					closable: false,
+					icon: Ext.MessageBox.INFO,
+					msg: 'Cetak Billing, Sukses!!',
+					title: 'RESTO'
+				});
+			},
+			failure: function(response) {
+				Ext.MessageBox.show({
+					buttons: Ext.MessageBox.OK,
+					closable: false,
+					icon: Ext.MessageBox.INFO,
+					message: 'Load default value Failed, Connection Failed!!',
+					title: 'RESTO'
+				});
+			}
+		});
+	}
+
 	function fnRePrint(xorder) {
 		Ext.Ajax.on('beforerequest', fnMaskShow);
 		Ext.Ajax.on('requestcomplete', fnMaskHide);
@@ -1119,6 +1298,35 @@ Ext.onReady(function() {
 				});
 			}
 		});
+	}
+
+	function fnExport() {
+		var xperiode =  Ext.Date.format(Ext.getCmp('cboPeriode').getValue(), 'Y-m-d');
+
+		var popUp = Ext.create('Ext.window.Window', {
+			width: 300,
+			closable: false,
+			draggable: false,
+			layout: 'fit',
+			title: 'RESTO',
+			items: [],
+			buttons: [{
+				xtype: 'button',
+				text: 'Download',
+				href: 'order/exportexcel/'+ xperiode,
+				hrefTarget: '_blank',
+				handler: function() {
+					vMask.hide();
+					popUp.hide();
+				}
+			},{
+				text: 'Exit',
+				handler: function() {
+					vMask.hide();
+					popUp.hide();
+				}
+			}]
+		}).show();
 	}
 
 	var frmOrder = Ext.create('Ext.form.Panel', {
@@ -1206,12 +1414,19 @@ Ext.onReady(function() {
 					}]
 				}],
 				buttons: [{
-					iconCls: 'icon-print',
+					iconCls: 'icon-save',
 					id: 'btnSave',
 					name: 'btnSave',
 					text: 'Save & Print',
 					scale: 'medium',
 					handler: fnCekSave
+				},{
+					iconCls: 'icon-print',
+					id: 'btnPayment',
+					name: 'btnPayment',
+					text: 'Print Payment',
+					scale: 'medium',
+					handler: fnPrintPay
 				},{
 					iconCls: 'icon-reset',
 					text: 'Reset',
@@ -1239,6 +1454,14 @@ Ext.onReady(function() {
 					items: [
 						gridOrderHistory
 					]
+				}],
+				buttons: [{
+					iconCls: 'icon-print',
+					id: 'btnExport',
+					name: 'btnExport',
+					text: 'Export Excel',
+					scale: 'medium',
+					handler: fnExport
 				}]
 			}]
 		}]

@@ -21,18 +21,21 @@ class MOrder extends CI_Model {
 		return $sSQL;
 	}
 
-	public function listHeaderAll($sCari)
+	public function listHeaderAll($dPeriode, $sCari)
 	{
 		$xSQL = ("
 			SELECT fs_no_order, fd_tanggal_buat, fs_nama_tamu, 
 				fs_no_meja, fn_jumlah_tamu, fs_kode_pembayaran,
-				fn_subtotal, fn_serv_charge, fn_ppn, fn_total_bill
+				fn_subtotal, fn_serv_charge, fn_ppn, fn_total_bill,
+				fn_uang_bayar, fn_uang_kembali
 			FROM tx_order_header
+			WHERE MONTH(fd_tanggal_buat) = MONTH('".trim($dPeriode)."')
+			AND YEAR(fd_tanggal_buat) = YEAR('".trim($dPeriode)."')
 		");
 
 		if (!empty($sCari)) {
 			$xSQL = $xSQL.("
-				WHERE (fs_no_order LIKE '%".trim($sCari)."%' 
+				AND (fs_no_order LIKE '%".trim($sCari)."%' 
 					OR fs_nama_tamu LIKE '%".trim($sCari)."%')
 			");
 		}
@@ -41,18 +44,21 @@ class MOrder extends CI_Model {
 		return $sSQL;
 	}
 
-	public function listHeader($sCari, $nStart, $nLimit)
+	public function listHeader($dPeriode, $sCari, $nStart, $nLimit)
 	{
 		$xSQL = ("
 			SELECT fs_no_order, fd_tanggal_buat, fs_nama_tamu, 
 				fs_no_meja, fn_jumlah_tamu, fs_kode_pembayaran,
-				fn_subtotal, fn_serv_charge, fn_ppn, fn_total_bill
+				fn_subtotal, fn_serv_charge, fn_ppn, fn_total_bill,
+				fn_uang_bayar, fn_uang_kembali
 			FROM tx_order_header
+			WHERE MONTH(fd_tanggal_buat) = MONTH('".trim($dPeriode)."')
+			AND YEAR(fd_tanggal_buat) = YEAR('".trim($dPeriode)."')
 		");
 
 		if (!empty($sCari)) {
 			$xSQL = $xSQL.("
-				WHERE (fs_no_order LIKE '%".trim($sCari)."%' 
+				AND (fs_no_order LIKE '%".trim($sCari)."%' 
 					OR fs_nama_tamu LIKE '%".trim($sCari)."%')
 			");
 		}
@@ -68,7 +74,8 @@ class MOrder extends CI_Model {
 	public function listDetailAll($sKode)
 	{
 		$xSQL = ("
-			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_harga, a.fn_itemtotal, b.fs_nama_menu
+			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_harga, a.fn_qty, 
+				a.fn_itemtotal, b.fs_nama_menu
 			FROM tx_order_detail a
 			LEFT JOIN tm_menu b ON b.fs_kode_menu = a.fs_kode_menu
 			WHERE a.fs_no_order = '".trim($sKode)."'
@@ -81,7 +88,8 @@ class MOrder extends CI_Model {
 	public function listDetail($sKode, $nStart, $nLimit)
 	{
 		$xSQL = ("
-			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_harga, a.fn_itemtotal, b.fs_nama_menu
+			SELECT a.fs_no_order, a.fs_kode_menu, a.fn_harga, a.fn_qty, 
+				a.fn_itemtotal, b.fs_nama_menu
 			FROM tx_order_detail a
 			LEFT JOIN tm_menu b ON b.fs_kode_menu = a.fs_kode_menu
 			WHERE a.fs_no_order = '".trim($sKode)."'
@@ -117,6 +125,22 @@ class MOrder extends CI_Model {
 			FROM tx_order_detail a
 			LEFT JOIN tm_menu b ON b.fs_kode_menu = a.fs_kode_menu
 			WHERE a.fs_no_order = '".trim($sKode)."'
+		");
+
+		$sSQL = $this->db->query($xSQL);
+		return $sSQL;
+	}
+
+	public function getReport($dPeriode)
+	{
+		$xSQL = ("
+			SELECT fs_no_order, fs_nama_tamu, fs_no_meja, fn_jumlah_tamu,
+				fs_kode_pembayaran, fn_subtotal, fn_serv_charge,
+				fn_ppn, fn_total_bill, fn_uang_bayar, fn_uang_kembali,
+				fs_user_buat, fd_tanggal_buat
+			FROM tx_order_header
+			WHERE MONTH(fd_tanggal_buat) = MONTH('".trim($dPeriode)."')
+			AND YEAR(fd_tanggal_buat) = YEAR('".trim($dPeriode)."')
 		");
 
 		$sSQL = $this->db->query($xSQL);
