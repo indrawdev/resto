@@ -342,6 +342,10 @@ Ext.onReady(function() {
 		Ext.getCmp('txtTotalBill').setValue(xsubtotal);
 	}
 
+	function fnDiskon() {
+		
+	}
+
 	// POPUP MENU
 	var winGrid = Ext.create('Ext.grid.Panel',{
 		anchor: '100%',
@@ -1417,7 +1421,7 @@ Ext.onReady(function() {
 					iconCls: 'icon-save',
 					id: 'btnSave',
 					name: 'btnSave',
-					text: 'Save & Print',
+					text: 'Save & Print Bill',
 					scale: 'medium',
 					handler: fnCekSave
 				},{
